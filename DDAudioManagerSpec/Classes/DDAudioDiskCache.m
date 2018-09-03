@@ -74,7 +74,7 @@ typedef enum {
     Lock();
     // 设置外放声音
     NSError *error = nil;
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryAmbient error:&error];
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:&error];
     BOOL isFileExist = [[DDWriteFileSupport ShareInstance]readFile:filePath FileType:Data];
     if (isFileExist) {
         switch ([self choosePlayType:key]) {
