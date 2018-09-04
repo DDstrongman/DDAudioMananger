@@ -2,7 +2,7 @@
 
 
 ## Example
-**类似SDWebImage的通过URL，在线播放并下载缓存音频工具类，请使用shareInstance实例化或定义Manager为全局函数:**<br>
+**类似SDWebImage的通过URL，在线播放并下载缓存音频工具类，请使用shareInstance实例化或定义Manager为全局变量:**<br>
 关键函数 <br>
 ```
 /**
