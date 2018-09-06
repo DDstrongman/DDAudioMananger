@@ -3,6 +3,7 @@
 
 ## Example
 **类似SDWebImage的通过URL，在线播放并下载缓存音频工具类，请使用shareInstance实例化或定义Manager为全局变量:**<br>
+**觉得好用请给star，不好用欢迎fork，push帮忙提升或是直接反馈，楼主尽快修复**
 关键函数 <br>
 ```
 /**
@@ -20,7 +21,7 @@
 
 ## Installation
 
-DDAudioManagerSpec is available through [CocoaPods](http://cocoapods.org). To install
+DDAudioManage is available through [CocoaPods](http://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
 ```ruby
@@ -33,4 +34,4 @@ DDStrongman, lishengshu232@gmail.com
 
 ## License
 
-DDAudioManagerSpec is available under the MIT license. See the LICENSE file for more info.
+DDAudioManager is available under the MIT license. See the LICENSE file for more info.
