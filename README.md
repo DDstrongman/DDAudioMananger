@@ -1,4 +1,4 @@
-# DDAudioManagerSpec
+# DDAudioManager
 
 
 ## Example
