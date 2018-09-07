@@ -40,4 +40,5 @@ TODO: Add long description of the pod here.
   # s.frameworks = 'UIKit', 'MapKit', 'AVFoundation'
   s.dependency 'DDWriteFileManager'
   s.dependency 'DDHttpSupport'
+  s.dependency 'DDSqliteManager'
 end
