@@ -10,7 +10,21 @@
 
 @interface DDAudioDiskCache : NSObject
 
-#pragma mark - Initializer
+#pragma mark - Attribute 所有硬盘缓存参考自YYCache
+///=============================================================================
+/// @name Attribute
+///=============================================================================
+
+/**
+缓存数量限制
+*/
+@property (nonatomic, assign) int diskTrimCount;
+/**
+ 缓存文件大小size限制
+ */
+@property (nonatomic, assign) float diskTrimSize;
+
+#pragma mark - Initializer  所有硬盘缓存参考自YYCache
 ///=============================================================================
 /// @name Initializer
 ///=============================================================================
@@ -85,28 +99,17 @@
 ///=============================================================================
 /// @name Trim
 ///=============================================================================
+/**
+ 通过LRU-k算法删除超过数量限制的文件
 
-/**
- Removes objects from the cache use LRU, until the `totalCount` is below the specified value.
- This method may blocks the calling thread until operation finished.
- 
- @param count  The total count allowed to remain after the cache has been trimmed.
+ @param count 限制的数量
  */
-//- (void)trimToCount:(NSUInteger)count;
+- (void)trimToCount:(int)count;
+/**
+ 通过LRU-k算法删除超过大小限制之后的文件
 
-/**
- Removes objects from the cache use LRU, until the `totalCost` is below the specified value.
- This method may blocks the calling thread until operation finished.
- 
- @param cost The total cost allowed to remain after the cache has been trimmed.
+ @param cost 限制的大小
  */
-//- (void)trimToCost:(NSUInteger)cost;
-/**
- Removes objects from the cache use LRU, until all expiry objects removed by the specified value.
- This method may blocks the calling thread until operation finished.
- 
- @param age  The maximum age of the object.
- */
-//- (void)trimToAge:(NSTimeInterval)age;
+- (void)trimToCost:(float)cost;
 
 @end

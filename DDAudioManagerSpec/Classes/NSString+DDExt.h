@@ -16,5 +16,7 @@
 - (NSString *)md5Mod16Big;
 ///md5 32位加密
 - (NSString *)md5Mod32;
+///获取当前距离1970的时间
+- (NSString *)currentTimeSince1970;
 
 @end

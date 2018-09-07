@@ -31,10 +31,30 @@
     return DDAudioManangerInstance;
 }
 
+- (instancetype)init {
+    if (self = [super init]) {
+        _cache = [[DDAudioDiskCache alloc]initWithFileName:@"DDAudioManagerFiles"];
+        _http = [[DDAudioHttp alloc]init];
+    }
+    return self;
+}
+
+- (void)setTrimNum:(int)trimNum {
+    if (_trimSize != trimNum) {
+        _trimNum = trimNum;
+        _cache.diskTrimCount = _trimNum;
+    }
+}
+
+- (void)setTrimSize:(float)trimSize {
+    if (_trimSize != trimSize) {
+        _trimSize = trimSize;
+        _cache.diskTrimSize = _trimSize;
+    }
+}
+
 - (void)playAudioWithUrl:(NSString *)url
                   Method:(DDAudioMethod)method {
-    _cache = [[DDAudioDiskCache alloc]initWithFileName:@"DDAudioManagerFiles"];
-    _http = [[DDAudioHttp alloc]init];
     switch (method) {
         case DiskElseHttp: {
             if ([_cache containsObjectForKey:url]) {

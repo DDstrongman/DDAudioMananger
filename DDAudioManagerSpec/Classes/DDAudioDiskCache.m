@@ -11,6 +11,8 @@
 #import <AVFoundation/AVFoundation.h>
 #import "NSString+DDExt.h"
 
+#import "DDLruStorage.h"
+
 typedef enum {
     DDAudioPlayerType = 0,
     DDSystemSoundType
@@ -22,6 +24,7 @@ typedef enum {
     ///整个沙盒文件夹的路径
     NSString *dirPath;
     dispatch_semaphore_t DDAudioLock;
+    DDLruStorage *dbStorage;
 }
 
 @property (nonatomic, strong) AVAudioPlayer *audioPlayer;
@@ -47,11 +50,27 @@ typedef enum {
             NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
             NSString *documentsDirectory = [paths objectAtIndex:0];
             dirPath = [documentsDirectory stringByAppendingPathComponent:name];
+            dbStorage = [[DDLruStorage alloc]initWithDBName:@"ddStorageDB"];
             DDAudioLock = dispatch_semaphore_create(1);
         }
     }
     return self;
 }
+#pragma mark - lazyloading
+- (void)setDiskTrimSize:(float)diskTrimSize {
+    if (_diskTrimSize != diskTrimSize) {
+        _diskTrimSize = diskTrimSize;
+        [self trimToCost:_diskTrimSize];
+    }
+}
+
+- (void)setDiskTrimCount:(int)diskTrimCount {
+    if (_diskTrimCount != diskTrimCount) {
+        _diskTrimCount = diskTrimCount;
+        [self trimToCount:_diskTrimCount];
+    }
+}
+
 
 - (BOOL)containsObjectForKey:(NSString *)key {
     Lock();
@@ -94,6 +113,7 @@ typedef enum {
                 _audioPlayer.numberOfLoops = 0; // 不循环
                 _audioPlayer.delegate = self;
                 if (_audioPlayer) {
+                    [dbStorage getItemForKey:key];
                     [_audioPlayer prepareToPlay];
                     [_audioPlayer play];
                 }
@@ -105,6 +125,7 @@ typedef enum {
                 /*根据声音的路径创建ID    （__bridge在两个框架之间强制转换类型，值转换内存，不修改内存管理的
                  权限）在转换数据类型的时候，不希望该对象的内存管理权限发生改变，原来是MRC类型，转换了还是 MRC。*/
                 AudioServicesCreateSystemSoundID((__bridge CFURLRef _Nonnull)(url), &soundID);
+                [dbStorage getItemForKey:key];
                 //播放音频
                 AudioServicesPlayAlertSound(soundID);
             }
@@ -115,6 +136,7 @@ typedef enum {
                 /*根据声音的路径创建ID    （__bridge在两个框架之间强制转换类型，值转换内存，不修改内存管理的
                  权限）在转换数据类型的时候，不希望该对象的内存管理权限发生改变，原来是MRC类型，转换了还是 MRC。*/
                 AudioServicesCreateSystemSoundID((__bridge CFURLRef _Nonnull)(url), &soundID);
+                [dbStorage getItemForKey:key];
                 //播放音频
                 AudioServicesPlayAlertSound(soundID);
             }
@@ -132,10 +154,20 @@ typedef enum {
         return;
     }
     NSString *filePath = [self getFilePath:key];
-    Lock();
-    [[DDWriteFileSupport ShareInstance]writeFile:filePath
-                                            Data:object];
-    Unlock();
+    if ([[DDWriteFileSupport ShareInstance]writeFile:filePath
+                                                Data:object]) {
+        DDKVStorageModel *item = [[DDKVStorageModel alloc]init];
+        item.key = key;
+        item.modTime = [[@"" currentTimeSince1970] intValue];
+        item.size = [[DDWriteFileSupport ShareInstance]countFileSize:filePath FileSizeType:KB];
+        [dbStorage saveItem:item];
+        if (_diskTrimCount > 0) {
+            [self trimToCount:_diskTrimCount];
+        }
+        if (_diskTrimSize > 0) {
+            [self trimToCost:_diskTrimSize];
+        }
+    }
 }
 
 - (void)setObject:(id<NSCoding>)object
@@ -147,27 +179,40 @@ typedef enum {
         return;
     }
     NSString *filePath = [self getFilePath:key];
-    Lock();
     if ([[DDWriteFileSupport ShareInstance]writeFile:filePath
                                                 Data:object]) {
         if (done) {
             done();
         }
+        DDKVStorageModel *item = [[DDKVStorageModel alloc]init];
+        item.key = key;
+        item.modTime = [[@"" currentTimeSince1970] intValue];
+        item.size = [[DDWriteFileSupport ShareInstance]countFileSize:filePath FileSizeType:KB];
+        [dbStorage saveItem:item];
+        if (_diskTrimCount > 0) {
+            [self trimToCount:_diskTrimCount];
+        }
+        if (_diskTrimSize > 0) {
+            [self trimToCost:_diskTrimSize];
+        }
     }
-    Unlock();
 }
 
 - (void)removeObjectForKey:(NSString *)key {
     if (!key) return;
     Lock();
     NSString *filePath = [self getFilePath:key];
-    [[DDWriteFileSupport ShareInstance]removeFile:filePath];
+    if ([[DDWriteFileSupport ShareInstance]removeFile:filePath]) {
+        [dbStorage removeItemForKey:key];
+    }
     Unlock();
 }
 
 - (void)removeAllObjects {
     Lock();
-    [[DDWriteFileSupport ShareInstance]removeDirFiles:dirPath];
+    if ([[DDWriteFileSupport ShareInstance]removeDirFiles:dirPath]) {
+        [dbStorage removeAllItems];
+    }
     Unlock();
 }
 
@@ -183,6 +228,24 @@ typedef enum {
     float size = [[DDWriteFileSupport ShareInstance]countDirSize:dirPath FileSizeType:KB];
     Unlock();
     return size;
+}
+
+- (void)trimToCount:(int)count {
+    __weak __typeof(&*self)weakSelf = self;
+    [dbStorage removeItemsToFitCount:count deleteFileBlock:^(NSString *key) {
+        __strong __typeof(&*weakSelf)strongSelf = weakSelf;
+       NSString *filePath = [strongSelf getFilePath:key];
+        [[DDWriteFileSupport ShareInstance]removeFile:filePath];
+    }];
+}
+
+- (void)trimToCost:(float)cost {
+    __weak __typeof(&*self)weakSelf = self;
+    [dbStorage removeItemsToFitSize:cost deleteFileBlock:^(NSString *key) {
+        __strong __typeof(&*weakSelf)strongSelf = weakSelf;
+        NSString *filePath = [strongSelf getFilePath:key];
+        [[DDWriteFileSupport ShareInstance]removeFile:filePath];
+    }];
 }
 #pragma mark - support methods
 - (NSString *)getFilePath:(NSString *)key {

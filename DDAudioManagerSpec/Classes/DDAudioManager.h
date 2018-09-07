@@ -21,6 +21,15 @@ typedef enum {
 @interface DDAudioManager : NSObject
 
 /**
+ 文件缓存数量限制
+ */
+@property (nonatomic, assign) int trimNum;
+/**
+ 文件缓存size限制(kb)
+ */
+@property (nonatomic, assign) float trimSize;
+
+/**
  快捷使用单实例播放，如不使用单实例务必使用全局变量实例化本类，否则ARC情况下会在播放音频前被释放
 
  @return 返回单实例
