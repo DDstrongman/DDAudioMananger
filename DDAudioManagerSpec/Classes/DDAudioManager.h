@@ -45,4 +45,11 @@ typedef enum {
 - (void)playAudioWithUrl:(NSString *)url
                   Method:(DDAudioMethod)method;
 
+/**
+ 预下载音频，防止音频使用时加载过慢
+
+ @param url 音频url
+ */
+- (void)downloadAudioWithUrl:(NSString *)url;
+
 @end

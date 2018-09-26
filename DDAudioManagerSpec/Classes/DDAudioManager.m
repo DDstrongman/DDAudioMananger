@@ -104,10 +104,18 @@
     }
 }
 
+- (void)downloadAudioWithUrl:(NSString *)url {
+    __weak __typeof(self)weakSelf = self;
+    [_http downloadHttp:url SuccessBlock:^(id res) {
+        [weakSelf.cache setObject:res forKey:url];
+    } FailedBlock:^(id res) {
+        
+    }];
+}
+
 #pragma mark - support methods
 - (void)httpPlayAndDownLoad:(NSString *)url {
     __weak __typeof(&*self)weakSelf = self;
-    
     [_http onlinePlayHttp:url SuccessBlock:^(id res) {
         
     } FailedBlock:^(id res) {
